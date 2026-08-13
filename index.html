@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#140b22" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Shift Pro Tracker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+
+    :root{
+      --bg-1: #04070f;
+      --bg-2: #071020;
+      --panel: rgba(10,12,20,0.6);
+      --muted: #9fb0c8;
+      --text: #eaf6ff;
+      --neon-cyan: #4ee7d8;
+      --neon-magenta: #c973ff;
+      --accent: #6c6cff;
+      --glass: rgba(255,255,255,0.03);
+      --radius: 16px;
+      --shadow-lg: 0 18px 60px rgba(2,6,23,0.7);
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--text);
+      background: radial-gradient(800px 400px at 10% 10%, rgba(108,108,255,0.07), transparent 10%),
+                  radial-gradient(600px 300px at 90% 85%, rgba(78,231,216,0.04), transparent 8%),
+                  linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-y:auto;
+    }
+
+    body::before{
+      content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent,rgba(255,255,255,0.02));mix-blend-mode:overlay;opacity:0.9;z-index:0;animation:drift 20s linear infinite;
+    }
+
+    @keyframes drift{0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)}}
+
+    .app-shell{max-width:1180px;margin:36px auto;padding:28px;position:relative;z-index:1}
+
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:14px}
+    .brand{display:flex;align-items:center;gap:14px}
+    .brand-mark{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;font-weight:800;color:#0b1020;background:linear-gradient(135deg,var(--neon-magenta),var(--neon-cyan));box-shadow:0 8px 30px rgba(110,82,255,0.18)}
+    .brand h1{margin:0;font-size:1.3rem;background:linear-gradient(90deg,var(--neon-magenta),var(--neon-cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .brand small{display:block;color:var(--muted);font-size:0.75rem}
+
+    .account-panel{display:flex;align-items:center;gap:12px;padding:8px 12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:999px;border:1px solid rgba(255,255,255,0.03)}
+    .account-panel strong{font-weight:700}
+    .ghost-button{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--text);cursor:pointer}
+
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:22px;margin-top:22px}
+    .panel{background:var(--panel);border-radius:var(--radius);padding:18px;border:1px solid rgba(255,255,255,0.03);box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+    .panel::after{content:"";position:absolute;inset:-2px;background:linear-gradient(120deg,rgba(78,231,216,0.06),rgba(201,115,255,0.04));pointer-events:none;mix-blend-mode:overlay}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .panel-header h2{margin:0;font-size:1.05rem}
+
+    .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .field-grid.compact{grid-template-columns:repeat(3,1fr)}
+    label{display:block;font-size:0.78rem;color:var(--muted);margin-bottom:6px}
+    input,select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+
+    .action-buttons{display:flex;gap:10px;margin-top:14px}
+    button{border:0;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer;letter-spacing:0.02em}
+    .primary{background:linear-gradient(90deg,var(--neon-magenta),var(--neon-cyan));color:#071027;box-shadow:0 10px 30px rgba(78,231,216,0.06)}
+    .secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .stat-card{padding:16px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border:1px solid rgba(255,255,255,0.02);transform:translateY(10px) scale(.99);opacity:0;transition:all .6s cubic-bezier(.2,.9,.2,1)}
+    .stat-card span{font-size:0.72rem;color:var(--muted)}
+    .stat-card strong{display:block;margin-top:8px;font-size:1.3rem}
+    .stat-card.animate-in{transform:none;opacity:1}
+
+    .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+    .mini-card{padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);text-align:center;transform:translateY(10px) scale(.99);opacity:0;transition:all .6s .08s cubic-bezier(.2,.9,.2,1)}
+    .mini-card.animate-in{transform:none;opacity:1}
+
+    .table-wrapper{margin-top:14px;border-radius:12px;overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px;text-align:left;font-size:0.95rem;color:var(--text)}
+    thead th{font-size:0.72rem;color:var(--muted);text-transform:uppercase}
+    tbody tr{border-top:1px solid rgba(255,255,255,0.02)}
+
+    .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);padding:10px 14px;border-radius:10px;background:linear-gradient(180deg,#031026,transparent);border:1px solid rgba(255,255,255,0.03)}
+
+    .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center}
+    .modal{width:min(420px,calc(100% - 32px));padding:18px;border-radius:12px}
+
+    @media(max-width:980px){.grid{grid-template-columns:1fr}.field-grid.compact{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="layout">
+      <main class="main-area">
+        <header class="topbar">
+          <div class="brand small">
+            <div class="brand-mark">S</div>
+            <div>
+              <h1>Shift Pro</h1>
+            </div>
+          </div>
+          <div class="header-actions">
+            <div class="account-panel">
+              <span class="status-dot" id="syncDot" aria-label="sync status"></span>
+              <div>
+                <strong id="accountLabel">lakshinfernando19@gmail.com</strong>
+                <small id="syncLabel">Offline-ready</small>
+              </div>
+            </div>
+            <button class="pro-button" id="importBtn" type="button" title="Import CSV">Import</button>
+            <button class="pro-button" id="backupBtn" type="button" title="Download backup">Backup</button>
+            <button class="pro-button" id="undoBtn" type="button" title="Undo last change">Undo</button>
+            <button class="ghost-button" id="googleSignin" type="button">Connect</button>
+            <button class="ghost-button" id="syncNow" type="button" title="Push current data to other devices">Sync now</button>
+          </div>
+        </header>
+
+        <!-- Tabs (glassy) -->
+        <div class="tabs" role="tablist" aria-label="Main tabs">
+          <button class="tab active" data-target="panel-add" role="tab">Add</button>
+          <button class="tab" data-target="panel-overview" role="tab">Overview</button>
+          <button class="tab" data-target="panel-records" role="tab">Records</button>
+          <button class="tab" data-target="panel-report" role="tab">Report</button>
+          <button class="tab" data-target="panel-settings" role="tab">Settings</button>
+          <button class="tab" data-target="panel-sync" role="tab">Sync</button>
+        </div>
+
+        <section id="panel-add" class="grid panel" data-panel="panel-add">
+      <div id="panel-overview" class="panel" data-panel="panel-overview">
+        <div class="panel-header">
+          <h2>Add shift</h2>
+          <span class="chip" id="liveTime">Live</span>
+          <span class="live-indicator" id="liveDot" aria-hidden="true"></span>
+        </div>
+
+        <div class="field-grid">
+          <div>
+            <label for="shiftDate">Date</label>
+            <input type="date" id="shiftDate" />
+          </div>
+          <div>
+            <label for="shiftType">Shift</label>
+            <select id="shiftType">
+              <option value="morning">Morning (10:00 - 15:30)</option>
+              <option value="night">Night (18:30 - 23:30)</option>
+              <option value="both">Both (10:00 - 23:30)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="addShift" type="button" class="primary">Add shift</button>
+          <button id="downloadCsv" type="button" class="secondary">Export CSV</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Overview</h2>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span>Total shifts</span>
+            <strong id="countShifts">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Morning</span>
+            <strong id="countMorning">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Night</span>
+            <strong id="countNight">0</strong>
+          </div>
+          <div class="stat-card">
+            <span>Month pay</span>
+            <strong id="monthSalary">€0.00</strong>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <canvas id="analyticsChart" aria-label="Monthly analytics chart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-settings" class="panel" data-panel="panel-settings">
+      <div class="panel-header">
+        <h2>Payroll settings</h2>
+        <div class="toggle-wrap">
+          <label for="autoSendToggle">Auto send</label>
+          <input id="autoSendToggle" type="checkbox" />
+        </div>
+      </div>
+
+      <div class="field-grid compact">
+        <div>
+          <label for="shiftAmount">Shift value (€)</label>
+          <input id="shiftAmount" type="number" min="0" step="0.01" />
+        </div>
+        <div>
+          <label for="monthlyTargetInput">Monthly target (€)</label>
+          <input id="monthlyTargetInput" type="number" min="0" step="1" />
+        </div>
+        <div>
+          <label for="summaryEmail">Summary email</label>
+          <input id="summaryEmail" type="email" value="lakshinfernando19@gmail.com" />
+        </div>
+      </div>
+
+      <div class="action-buttons" style="margin-top: 16px;">
+        <button id="saveOptions" type="button" class="secondary">Save settings</button>
+        <button id="resetOptions" type="button" class="secondary">Reset</button>
+        <button id="emailSummary" type="button" class="secondary">Send summary</button>
+      </div>
+    </section>
+
+    <section id="panel-sync" class="panel" data-panel="panel-sync" style="margin-top: 22px;">
+      <div class="panel-header">
+        <h2>Sync</h2>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <label for="liveSyncToggle">Live sync</label>
+          <input id="liveSyncToggle" type="checkbox" />
+        </div>
+      </div>
+
+      <div class="field-grid compact">
+        <div>
+          <label>Last synced</label>
+          <div style="padding-top:6px;"><small id="syncLastLabel">Never</small></div>
+        </div>
+        <div style="display:flex; align-items:flex-end; gap:8px;">
+          <button id="syncNowPanel" type="button" class="secondary">Sync now</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-report" class="panel" data-panel="panel-report" style="margin-top: 22px;">
+      <div class="panel-header">
+        <h2>Monthly report</h2>
+        <select id="archiveMonthFilter" aria-label="Select archive month" style="max-width: 220px;">
+          <option value="">Past months</option>
+        </select>
+      </div>
+
+      <div class="summary-grid">
+        <div class="mini-card"><strong id="monthCountShifts">0</strong><span>Shifts</span></div>
+        <div class="mini-card"><strong id="monthCountMorning">0</strong><span>Morning</span></div>
+        <div class="mini-card"><strong id="monthCountNight">0</strong><span>Night</span></div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="mini-card"><strong id="monthTarget">€1200.00</strong><span>Target</span></div>
+        <div class="mini-card"><strong id="totalSalary">€0.00</strong><span>Total pay</span></div>
+        <div class="mini-card"><strong id="monthDifference">€0.00</strong><span>Remaining</span></div>
+      </div>
+    </section>
+
+    <section id="panel-records" class="panel" data-panel="panel-records" style="margin-top: 22px;">
+      <div class="panel-header">
+        <h2>Recorded shifts</h2>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Shift</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Salary</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="shiftTableBody"></tbody>
+        </table>
+      </div>
+
+      <p class="muted-copy">This page is built to stay smooth on desktop, tablet, and mobile, with immediate local syncing and Gmail-ready summary delivery.</p>
+    </section>
+  </div>
+
+  <div id="toast" class="toast hide" role="status" aria-live="polite">
+    <span id="toastText">Saved</span>
+  </div>
+
+  <div id="confirmBackdrop" class="modal-backdrop" aria-modal="true" role="dialog">
+    <div class="modal">
+      <h3>Confirm shift</h3>
+      <p class="muted-copy" style="margin: 0;">Do you want to add this shift to the tracker?</p>
+      <div class="modal-actions">
+        <button type="button" class="secondary" id="modalCancel">Cancel</button>
+        <button type="button" class="primary" id="modalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (compat). Create a local `firebase-config.js` and paste your config there. -->
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="app.js" defer></script>
+
+  <!-- Hidden file inputs for import/restore -->
+  <input type="file" id="importFile" accept=".csv" style="display:none" />
+  <input type="file" id="restoreFile" accept="application/json" style="display:none" />
+
+  <!-- CSV Import Mapping Modal -->
+  <div id="importModal" class="modal-backdrop" style="display:none;align-items:flex-start;padding-top:60px;">
+    <div class="modal" style="max-width:900px;">
+      <h3>Import CSV — preview & map columns</h3>
+      <p class="muted-copy">Map CSV columns to the app fields. Rows with invalid dates will be skipped.</p>
+      <div id="importMap" style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap"></div>
+      <div style="margin-top:12px;max-height:220px;overflow:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.03);">
+        <table style="width:100%;border-collapse:collapse;background:transparent">
+          <thead style="position:sticky;top:0;background:rgba(0,0,0,0.2)"><tr id="importPreviewHead"></tr></thead>
+          <tbody id="importPreviewBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+        <button id="importCancel" class="secondary">Cancel</button>
+        <button id="importConfirm" class="primary">Import selected</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'shiftTrackerRecordsV2';
+    const SETTINGS_KEY = 'shiftTrackerSettingsV2';
+    const DEFAULT_EMAIL = 'lakshinfernando19@gmail.com';
+    const DEFAULT_SHIFT_RATE = 33.33;
+    const DEFAULT_TARGET = 1200;
+    const SYNC_CHANNEL = 'shiftTrackerSync';
+
+    const elements = {
+      shiftDate: document.getElementById('shiftDate'),
+      shiftType: document.getElementById('shiftType'),
+      shiftAmount: document.getElementById('shiftAmount'),
+      monthlyTargetInput: document.getElementById('monthlyTargetInput'),
+      summaryEmail: document.getElementById('summaryEmail'),
+      autoSendToggle: document.getElementById('autoSendToggle'),
+      addShift: document.getElementById('addShift'),
+      downloadCsv: document.getElementById('downloadCsv'),
+      saveOptions: document.getElementById('saveOptions'),
+      resetOptions: document.getElementById('resetOptions'),
+      emailSummary: document.getElementById('emailSummary'),
+      shiftTableBody: document.getElementById('shiftTableBody'),
+      countShifts: document.getElementById('countShifts'),
+      countMorning: document.getElementById('countMorning'),
+      countNight: document.getElementById('countNight'),
+      monthSalary: document.getElementById('monthSalary'),
+      monthTarget: document.getElementById('monthTarget'),
+      monthDifference: document.getElementById('monthDifference'),
+      monthCountShifts: document.getElementById('monthCountShifts'),
+      monthCountMorning: document.getElementById('monthCountMorning'),
+      monthCountNight: document.getElementById('monthCountNight'),
+      archiveMonthFilter: document.getElementById('archiveMonthFilter'),
+      totalSalary: document.getElementById('totalSalary'),
+      toast: document.getElementById('toast'),
+      toastText: document.getElementById('toastText'),
+      confirmBackdrop: document.getElementById('confirmBackdrop'),
+      modalCancel: document.getElementById('modalCancel'),
+      modalConfirm: document.getElementById('modalConfirm'),
+      syncLabel: document.getElementById('syncLabel'),
+      syncDot: document.getElementById('syncDot'),
+      accountLabel: document.getElementById('accountLabel'),
+      liveTime: document.getElementById('liveTime'),
+      syncNow: document.getElementById('syncNow'),
+      liveSyncToggle: document.getElementById('liveSyncToggle'),
+      syncNowPanel: document.getElementById('syncNowPanel'),
+      syncLastLabel: document.getElementById('syncLastLabel'),
+      googleSignin: document.getElementById('googleSignin')
+    };
+
+    // --- Firebase scaffolding ---
+    // To enable cloud live-sync: create `firebase-config.js` next to this file with
+    // `window.FIREBASE_CONFIG = { apiKey: '...', authDomain: '...', projectId: '...', ... }`
+    // The app will read that object automatically.
+    const FIREBASE_CONFIG = window.FIREBASE_CONFIG || null; // provided by firebase-config.js
+    let firebaseApp = null;
+    let firebaseAuth = null;
+    let firebaseDb = null;
+    let firestoreUnsub = null;
+    const CLIENT_ID_KEY = 'shiftTrackerClientId';
+
+    function ensureClientId() {
+      const s = loadSettings();
+      if (!s.clientId) {
+        s.clientId = generateId();
+        saveSettings(s);
+      }
+      return s.clientId;
+    }
+
+    function initFirebase(config = FIREBASE_CONFIG) {
+      if (!config || !window.firebase) return;
+      try {
+        firebaseApp = firebase.initializeApp(config);
+        firebaseAuth = firebase.auth();
+        firebaseDb = firebase.firestore();
+
+        firebaseAuth.onAuthStateChanged((user) => {
+          if (user) {
+            const next = { ...getSettings(), firebaseUid: user.uid, email: user.email || getSettings().email };
+            saveSettings(next);
+            applySettings();
+            ensureClientId();
+            if (getSettings().liveSync !== false) startFirestoreListener(user.uid);
+          } else {
+            const s = getSettings();
+            delete s.firebaseUid;
+            saveSettings(s);
+            applySettings();
+            stopFirestoreListener();
+          }
+        });
+      } catch (e) {
+        console.error('Firebase init failed', e);
+      }
+    }
+
+    function startFirestoreListener(uid) {
+      if (!firebaseDb || !uid) return;
+      stopFirestoreListener();
+      const coll = firebaseDb.collection('users').doc(uid).collection('records');
+      firestoreUnsub = coll.onSnapshot((snapshot) => {
+        const current = loadRecords();
+        const map = new Map(current.map((r) => [r.id, r]));
+        const clientId = ensureClientId();
+        let changed = false;
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          if (!data) return;
+          const docId = doc.id;
+          // Handle serverTimestamp: if not yet resolved, skip for now
+          let incomingUpdated = 0;
+          if (data.updatedAt && data.updatedAt.toMillis) incomingUpdated = data.updatedAt.toMillis();
+          else if (typeof data.updatedAt === 'number') incomingUpdated = data.updatedAt;
+
+          // skip echoes from this client
+          if (data.lastUpdatedBy && data.lastUpdatedBy === clientId) return;
+
+          const existing = map.get(docId);
+          if (!existing || (incomingUpdated && incomingUpdated > (existing._remoteUpdatedAt || 0))) {
+            map.set(docId, {
+              id: docId,
+              date: data.date,
+              shift: data.shift,
+              shiftLabel: data.shiftLabel,
+              startTime: data.startTime,
+              endTime: data.endTime,
+              salary: data.salary,
+              _remoteUpdatedAt: incomingUpdated
+            });
+            changed = true;
+          }
+        });
+        if (changed) {
+          const merged = Array.from(map.values());
+          saveRecords(merged);
+          renderRecords();
+          showToast('Remote updates applied');
+          const nowLabel = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          if (elements.syncLastLabel) elements.syncLastLabel.textContent = nowLabel;
+        }
+      }, (err) => {
+        console.error('Firestore onSnapshot error', err);
+      });
+    }
+
+    function stopFirestoreListener() {
+      if (firestoreUnsub) {
+        try { firestoreUnsub(); } catch (e) {}
+        firestoreUnsub = null;
+      }
+    }
+
+    async function pushRecordsToFirestore(force = false) {
+      if (!firebaseDb) return;
+      const settings = getSettings();
+      const uid = settings.firebaseUid;
+      if (!uid) return;
+      const clientId = ensureClientId();
+      const records = loadRecords();
+      const collRef = firebaseDb.collection('users').doc(uid).collection('records');
+      try {
+        // Use batch writes for efficiency
+        const batch = firebaseDb.batch();
+        records.forEach((rec) => {
+          const docRef = collRef.doc(rec.id);
+          const payload = {
+            date: rec.date,
+            shift: rec.shift,
+            shiftLabel: rec.shiftLabel,
+            startTime: rec.startTime,
+            endTime: rec.endTime,
+            salary: Number(rec.salary || 0),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastUpdatedBy: clientId
+          };
+          batch.set(docRef, payload, { merge: true });
+        });
+        await batch.commit();
+        const nowLabel = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (elements.syncLastLabel) elements.syncLastLabel.textContent = nowLabel;
+        elements.syncLabel.textContent = `Last synced: ${nowLabel}`;
+        showToast('Synced to cloud');
+      } catch (e) {
+        console.error('pushRecordsToFirestore error', e);
+        showToast('Cloud sync failed');
+      }
+    }
+
+    // initialize firebase automatically if config is present
+    try { initFirebase(); } catch (e) {}
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function saveSettings(settings) {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    }
+
+    function getSettings() {
+      const saved = loadSettings();
+      return {
+        shiftAmount: Number(saved.shiftAmount ?? DEFAULT_SHIFT_RATE),
+        monthlyTarget: Number(saved.monthlyTarget ?? DEFAULT_TARGET),
+        autoSend: saved.autoSend === true,
+        email: saved.email || DEFAULT_EMAIL,
+        liveSync: saved.liveSync !== false // default true
+      };
+    }
+
+    function applySettings() {
+      const settings = getSettings();
+      elements.shiftAmount.value = settings.shiftAmount;
+      elements.monthlyTargetInput.value = settings.monthlyTarget;
+      elements.summaryEmail.value = settings.email;
+      elements.autoSendToggle.checked = settings.autoSend;
+      elements.accountLabel.textContent = settings.email || DEFAULT_EMAIL;
+      if (elements.liveSyncToggle) elements.liveSyncToggle.checked = settings.liveSync !== false;
+    }
+
+    function generateId() {
+      return window.crypto?.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(36).slice(2,10)}`;
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'EUR' }).format(Number(value || 0));
+    }
+
+    function getMonthKey(dateString) {
+      return String(dateString || '').slice(0, 7);
+    }
+
+    function formatMonthLabel(monthKey) {
+      if (!monthKey || !monthKey.includes('-')) return 'Current month';
+      const [year, month] = monthKey.split('-');
+      const date = new Date(Number(year), Number(month) - 1, 1);
+      return date.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+    }
+
+    function getCurrentMonthKey() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function loadRecords() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return normalizeRecords(Array.isArray(parsed) ? parsed : []);
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function normalizeRecords(records) {
+      return records.map((record) => ({
+        id: record.id || generateId(),
+        date: record.date,
+        shift: record.shift,
+        shiftLabel: record.shiftLabel || (record.shift === 'morning' ? 'Morning' : 'Night'),
+        startTime: record.startTime || (record.shift === 'morning' ? '10:00' : '18:30'),
+        endTime: record.endTime || (record.shift === 'morning' ? '15:30' : '23:30'),
+        salary: Number(record.salary || getSettings().shiftAmount)
+      }));
+    }
+
+    function saveRecords(records) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      // Only broadcast automatically when live sync is enabled in settings
+      try {
+        if (getSettings().liveSync !== false) {
+          broadcastSync(records);
+          // if Firebase is initialized, push to cloud as well
+          if (typeof pushRecordsToFirestore === 'function') {
+            try { pushRecordsToFirestore(); } catch (e) { /* ignore */ }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    function renderSummary(records) {
+      const settings = getSettings();
+      const currentMonthKey = getCurrentMonthKey();
+      const monthRecords = records.filter((record) => getMonthKey(record.date) === currentMonthKey);
+
+      let morning = 0;
+      let night = 0;
+      let totalPay = 0;
+
+      monthRecords.forEach((record) => {
+        if (record.shift === 'morning') morning += 1;
+        if (record.shift === 'night') night += 1;
+        totalPay += Number(record.salary || 0);
+      });
+
+      elements.monthCountShifts.textContent = String(monthRecords.length);
+      elements.monthCountMorning.textContent = String(morning);
+      elements.monthCountNight.textContent = String(night);
+      elements.monthSalary.textContent = formatCurrency(totalPay);
+      elements.monthTarget.textContent = formatCurrency(settings.monthlyTarget);
+      elements.monthDifference.textContent = formatCurrency(Math.max(0, settings.monthlyTarget - totalPay));
+
+      const allCurrent = records.filter((record) => record.date && record.shift);
+      elements.countShifts.textContent = allCurrent.length;
+      elements.countMorning.textContent = allCurrent.filter((record) => record.shift === 'morning').length;
+      elements.countNight.textContent = allCurrent.filter((record) => record.shift === 'night').length;
+      elements.totalSalary.textContent = formatCurrency(allCurrent.reduce((sum, record) => sum + Number(record.salary || 0), 0));
+    }
+
+    function renderArchive(records) {
+      const monthKeys = Array.from(new Set(records.map((r) => getMonthKey(r.date)))).filter(Boolean).sort((a, b) => b.localeCompare(a));
+      const currentMonth = getCurrentMonthKey();
+      const pastMonths = monthKeys.filter((key) => key !== currentMonth);
+      elements.archiveMonthFilter.innerHTML = '<option value="">Past months</option>' + pastMonths.map((key) => `<option value="${key}">${formatMonthLabel(key)}</option>`).join('');
+
+      const selected = elements.archiveMonthFilter.value;
+      if (!selected) return;
+
+      const selectedRecords = records.filter((record) => getMonthKey(record.date) === selected);
+      const total = selectedRecords.reduce((sum, record) => sum + Number(record.salary || 0), 0);
+
+      elements.monthCountShifts.textContent = String(selectedRecords.length);
+      elements.monthCountMorning.textContent = String(selectedRecords.filter((record) => record.shift === 'morning').length);
+      elements.monthCountNight.textContent = String(selectedRecords.filter((record) => record.shift === 'night').length);
+      elements.monthSalary.textContent = formatCurrency(total);
+      elements.monthTarget.textContent = formatCurrency(getSettings().monthlyTarget);
+      elements.monthDifference.textContent = formatCurrency(Math.max(0, getSettings().monthlyTarget - total));
+    }
+
+    function renderTable(records) {
+      elements.shiftTableBody.innerHTML = '';
+      const currentMonth = getCurrentMonthKey();
+      const filtered = records.filter((record) => getMonthKey(record.date) === currentMonth).sort((a, b) => a.date.localeCompare(b.date));
+
+      if (!filtered.length) {
+        elements.shiftTableBody.innerHTML = '<tr><td colspan="6" style="color: var(--muted); padding: 18px;">No shifts recorded for this month yet.</td></tr>';
+        return;
+      }
+
+      filtered.forEach((record) => {
+        const row = document.createElement('tr');
+        row.dataset.recordId = record.id;
+        row.innerHTML = `
+          <td>${record.date}</td>
+          <td>${record.shiftLabel}</td>
+          <td>${record.startTime}</td>
+          <td>${record.endTime}</td>
+          <td>${formatCurrency(record.salary)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="secondary edit-record" type="button">Edit</button>
+              <button class="secondary delete-record" type="button">Delete</button>
+            </div>
+          </td>
+        `;
+        elements.shiftTableBody.appendChild(row);
+      });
+    }
+
+    function renderRecords() {
+      const records = loadRecords();
+      renderTable(records);
+      renderSummary(records);
+      renderArchive(records);
+    }
+
+    function showToast(text) {
+      elements.toastText.textContent = text;
+      elements.toast.classList.remove('hide');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => elements.toast.classList.add('hide'), 2200);
+    }
+
+    function createRecord(date, shift) {
+      const settings = getSettings();
+      const isMorning = shift === 'morning';
+      return {
+        id: generateId(),
+        date,
+        shift,
+        shiftLabel: isMorning ? 'Morning' : 'Night',
+        startTime: isMorning ? '10:00' : '18:30',
+        endTime: isMorning ? '15:30' : '23:30',
+        salary: Number(settings.shiftAmount)
+      };
+    }
+
+    function confirmAdd() {
+      const date = elements.shiftDate.value;
+      const shift = elements.shiftType.value;
+      if (!date) {
+        showToast('Please choose a date');
+        return;
+      }
+
+      const records = loadRecords();
+      if (shift === 'both') {
+        records.push(createRecord(date, 'morning'), createRecord(date, 'night'));
+      } else {
+        records.push(createRecord(date, shift));
+      }
+
+      saveRecords(records);
+      renderRecords();
+      elements.shiftDate.value = '';
+      elements.shiftType.value = 'morning';
+      elements.confirmBackdrop.style.display = 'none';
+      showToast(shift === 'both' ? 'Morning + night added' : 'Shift added');
+
+      const settings = getSettings();
+      if (settings.autoSend && isLastDayOfMonth(new Date(date))) {
+        sendSummaryMail();
+      }
+    }
+
+    function deleteRecord(recordId) {
+      const records = loadRecords().filter((record) => record.id !== recordId);
+      saveRecords(records);
+      renderRecords();
+      showToast('Record deleted');
+    }
+
+    function updateRecord(recordId, updates) {
+      const records = loadRecords();
+      const target = records.find((record) => record.id === recordId);
+      if (!target) return;
+      Object.assign(target, updates);
+      saveRecords(records);
+      renderRecords();
+      showToast('Record updated');
+    }
+
+    function editRecord(recordId) {
+      const records = loadRecords();
+      const record = records.find((item) => item.id === recordId);
+      if (!record) return;
+
+      const newDate = prompt('Edit date (YYYY-MM-DD):', record.date);
+      if (newDate === null) return;
+
+      const shiftInput = prompt('Edit shift (morning/night):', record.shift);
+      if (shiftInput === null) return;
+
+      const normalizedShift = shiftInput.toLowerCase();
+      if (!['morning', 'night'].includes(normalizedShift)) {
+        showToast('Choose morning or night');
+        return;
+      }
+
+      updateRecord(recordId, {
+        date: newDate,
+        shift: normalizedShift,
+        shiftLabel: normalizedShift === 'morning' ? 'Morning' : 'Night',
+        startTime: normalizedShift === 'morning' ? '10:00' : '18:30',
+        endTime: normalizedShift === 'morning' ? '15:30' : '23:30',
+        salary: Number(getSettings().shiftAmount)
+      });
+    }
+
+    function handleTableClick(event) {
+      const button = event.target.closest('button');
+      if (!button) return;
+      const row = button.closest('tr');
+      if (!row) return;
+      const recordId = row.dataset.recordId;
+      if (!recordId) return;
+
+      if (button.classList.contains('delete-record')) {
+        if (confirm('Delete this shift record?')) deleteRecord(recordId);
+      }
+      if (button.classList.contains('edit-record')) editRecord(recordId);
+    }
+
+    function isLastDayOfMonth(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getDate() === 1;
+    }
+
+    function buildSummaryBody(records = loadRecords()) {
+      const settings = getSettings();
+      const currentMonth = getCurrentMonthKey();
+      const filtered = records.filter((record) => getMonthKey(record.date) === currentMonth);
+      const total = filtered.reduce((sum, record) => sum + Number(record.salary || 0), 0);
+      const morning = filtered.filter((record) => record.shift === 'morning').length;
+      const night = filtered.filter((record) => record.shift === 'night').length;
+      const remaining = Math.max(0, settings.monthlyTarget - total);
+
+      const lines = [
+        `Shift tracker summary for ${formatMonthLabel(currentMonth)}`,'',
+        `Total shifts: ${filtered.length}`,
+        `Morning shifts: ${morning}`,
+        `Night shifts: ${night}`,
+        `Total pay: ${formatCurrency(total)}`,
+        `Target: ${formatCurrency(settings.monthlyTarget)}`,
+        `Remaining: ${formatCurrency(remaining)}`,
+        '',
+        'Shift details:'
+      ];
+
+      if (!filtered.length) {
+        lines.push('No shifts recorded this month.');
+      } else {
+        filtered.forEach((record) => lines.push(`- ${record.date} | ${record.shiftLabel} | ${record.startTime} - ${record.endTime} | ${formatCurrency(record.salary)}`));
+      }
+      return lines.join('\n');
+    }
+
+    function sendSummaryMail() {
+      const settings = getSettings();
+      const records = loadRecords();
+      const subject = encodeURIComponent(`Shift tracker summary for ${formatMonthLabel(getCurrentMonthKey())}`);
+      const body = encodeURIComponent(buildSummaryBody(records));
+      const mailTo = settings.email || DEFAULT_EMAIL;
+      window.location.href = `mailto:${encodeURIComponent(mailTo)}?subject=${subject}&body=${body}`;
+      showToast('Summary mail draft opened');
+    }
+
+    function downloadCsvExport() {
+      const records = loadRecords();
+      if (!records.length) {
+        showToast('No data to export');
+        return;
+      }
+
+      const rows = [
+        ['Date', 'Shift', 'Start', 'End', 'Salary'],
+        ...records.map((record) => [record.date, record.shiftLabel, record.startTime, record.endTime, Number(record.salary || 0).toFixed(2)])
+      ];
+
+      const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url; link.download = 'shift-records.csv';
+      document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+      showToast('CSV downloaded');
+    }
+
+    function saveOptionsHandler() {
+      const next = {
+        ...getSettings(),
+        shiftAmount: Number(elements.shiftAmount.value) || DEFAULT_SHIFT_RATE,
+        monthlyTarget: Number(elements.monthlyTargetInput.value) || DEFAULT_TARGET,
+        autoSend: elements.autoSendToggle.checked,
+        email: elements.summaryEmail.value || DEFAULT_EMAIL
+      };
+      saveSettings(next);
+      applySettings();
+      renderRecords();
+      showToast('Settings saved');
+    }
+
+    function resetOptionsHandler() {
+      saveSettings({ shiftAmount: DEFAULT_SHIFT_RATE, monthlyTarget: DEFAULT_TARGET, autoSend: false, email: DEFAULT_EMAIL, liveSync: true });
+      applySettings();
+      renderRecords();
+      showToast('Settings reset');
+    }
+
+    function broadcastSync(data) {
+      if (!('BroadcastChannel' in window)) return;
+      const channel = new BroadcastChannel(SYNC_CHANNEL);
+      channel.postMessage({ key: STORAGE_KEY, data, owner: getSettings().email || DEFAULT_EMAIL });
+      channel.close();
+    }
+
+    function listenForSync() {
+      if (!('BroadcastChannel' in window)) return;
+      const channel = new BroadcastChannel(SYNC_CHANNEL);
+      channel.addEventListener('message', (event) => {
+        const payload = event.data || {};
+        if (payload.key !== STORAGE_KEY) return;
+        if (payload.owner && payload.owner === getSettings().email) return;
+        try {
+          const incoming = normalizeRecords(Array.isArray(payload.data) ? payload.data : []);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(incoming));
+          renderRecords();
+          showToast('Another device synced updates');
+        } catch (error) {}
+      });
+    }
+
+    function setupCrossTabSync() {
+      if (window.addEventListener) {
+        window.addEventListener('storage', (event) => {
+          if (event.key === STORAGE_KEY && event.newValue) {
+            renderRecords();
+            elements.syncLabel.textContent = 'Live sync active';
+          }
+        });
+      }
+      listenForSync();
+    }
+
+    function initGoogleAction() {
+      // If Firebase Auth is available, use Google sign-in flow, otherwise fallback to a simple prompt
+      if (window.firebase && firebase && firebase.auth) {
+        elements.googleSignin.addEventListener('click', async () => {
+          try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await firebase.auth().signInWithPopup(provider);
+            const user = result.user;
+            if (user) {
+              saveSettings({ ...getSettings(), email: user.email || getSettings().email, firebaseUid: user.uid });
+              applySettings();
+              showToast('Signed in as ' + (user.email || 'user'));
+              // start listener if live sync enabled
+              if (getSettings().liveSync !== false) startFirestoreListener(user.uid);
+            }
+          } catch (err) {
+            console.error('Google sign-in failed', err);
+            showToast('Sign-in cancelled or failed');
+          }
+        });
+      } else {
+        elements.googleSignin.addEventListener('click', () => {
+          const value = prompt('Connect Gmail account for this dashboard:', getSettings().email || DEFAULT_EMAIL);
+          if (!value) return;
+          const nextEmail = value.trim();
+          if (!nextEmail) return;
+          saveSettings({ ...getSettings(), email: nextEmail });
+          applySettings();
+          showToast('Gmail account connected');
+        });
+      }
+    }
+
+    function updateClock() {
+      const now = new Date();
+      elements.liveTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    elements.addShift.addEventListener('click', () => {
+      elements.confirmBackdrop.style.display = 'flex';
+    });
+    elements.modalCancel.addEventListener('click', () => {
+      elements.confirmBackdrop.style.display = 'none';
+      showToast('Cancelled');
+    });
+    elements.modalConfirm.addEventListener('click', confirmAdd);
+    elements.emailSummary.addEventListener('click', sendSummaryMail);
+    elements.downloadCsv.addEventListener('click', downloadCsvExport);
+    elements.saveOptions.addEventListener('click', saveOptionsHandler);
+    elements.resetOptions.addEventListener('click', resetOptionsHandler);
+    if (elements.syncNow) {
+      elements.syncNow.addEventListener('click', () => {
+        try {
+          const records = loadRecords();
+          broadcastSync(records);
+          const nowLabel = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          elements.syncLabel.textContent = `Last synced: ${nowLabel}`;
+          if (elements.syncLastLabel) elements.syncLastLabel.textContent = nowLabel;
+          elements.syncDot.style.background = 'var(--accent)';
+          setTimeout(() => { elements.syncDot.style.background = 'var(--muted)'; }, 2200);
+          showToast('Synced to other devices');
+        } catch (err) {
+          showToast('Sync failed');
+        }
+      });
+    }
+
+    // Panel-specific sync now (forces a broadcast regardless of live setting)
+    if (elements.syncNowPanel) {
+      elements.syncNowPanel.addEventListener('click', () => {
+        try {
+          const records = loadRecords();
+          broadcastSync(records);
+          // also push to Firestore if initialized
+          if (typeof pushRecordsToFirestore === 'function') {
+            try { pushRecordsToFirestore(); } catch (e) { console.error(e); }
+          }
+          const nowLabel = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          elements.syncLabel.textContent = `Last synced: ${nowLabel}`;
+          if (elements.syncLastLabel) elements.syncLastLabel.textContent = nowLabel;
+          elements.syncDot.style.background = 'var(--accent)';
+          setTimeout(() => { elements.syncDot.style.background = 'var(--muted)'; }, 2200);
+          showToast('Synced to other devices');
+        } catch (err) {
+          showToast('Sync failed');
+        }
+      });
+    }
+
+    // Live sync toggle handler
+    if (elements.liveSyncToggle) {
+      elements.liveSyncToggle.addEventListener('change', async () => {
+        const next = { ...getSettings(), liveSync: elements.liveSyncToggle.checked };
+        saveSettings(next);
+        applySettings();
+        showToast(elements.liveSyncToggle.checked ? 'Live sync enabled' : 'Live sync disabled');
+        try {
+          const s = getSettings();
+          if (elements.liveSyncToggle.checked) {
+            if (firebaseDb && s.firebaseUid) {
+              startFirestoreListener(s.firebaseUid);
+              if (typeof pushRecordsToFirestore === 'function') await pushRecordsToFirestore();
+            }
+          } else {
+            stopFirestoreListener();
+          }
+        } catch (e) { /* ignore */ }
+      });
+    }
+    elements.archiveMonthFilter.addEventListener('change', () => {
+      const selected = elements.archiveMonthFilter.value;
+      if (!selected) {
+        renderRecords();
+        return;
+      }
+      const records = loadRecords();
+      const selectedRecords = records.filter((record) => getMonthKey(record.date) === selected);
+      const total = selectedRecords.reduce((sum, record) => sum + Number(record.salary || 0), 0);
+      elements.monthCountShifts.textContent = String(selectedRecords.length);
+      elements.monthCountMorning.textContent = String(selectedRecords.filter((record) => record.shift === 'morning').length);
+      elements.monthCountNight.textContent = String(selectedRecords.filter((record) => record.shift === 'night').length);
+      elements.monthSalary.textContent = formatCurrency(total);
+      elements.monthTarget.textContent = formatCurrency(getSettings().monthlyTarget);
+      elements.monthDifference.textContent = formatCurrency(Math.max(0, getSettings().monthlyTarget - total));
+    });
+    elements.shiftTableBody.addEventListener('click', handleTableClick);
+
+    // Client-side init happens in app.js. This inline script keeps backward-compatible globals if needed.
+  </script>
+</body>
+</html>
